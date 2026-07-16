@@ -75,19 +75,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr create \
+          TITLE="Sync with upstream mc-rtc-superbuild ($(date +%Y-%m-%d))"
+          PR_BODY="Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`). Please review before merging, especially anything touching our extensions or presets."
+
+          if gh pr create \
             --base "$BASE_BRANCH" \
             --head "${{ steps.branch.outputs.name }}" \
-            --title "Sync with upstream mc-rtc-superbuild ($(date +%Y-%m-%d))" \
-            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`). Please review before merging, especially anything touching our extensions or presets." \
+            --title "$TITLE" \
+            --body "$PR_BODY" \
             --label "automated" \
-            --label "upstream-sync" \
-          || echo "PR creation failed (label may not exist yet) — creating without labels" && \
-          gh pr create \
-            --base "$BASE_BRANCH" \
-            --head "${{ steps.branch.outputs.name }}" \
-            --title "Sync with upstream mc-rtc-superbuild ($(date +%Y-%m-%d))" \
-            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`). Please review before merging, especially anything touching our extensions or presets."
+            --label "upstream-sync"; then
+            echo "PR created with labels"
+          else
+            echo "PR creation with labels failed (labels may not exist yet) — retrying without labels"
+            gh pr create \
+              --base "$BASE_BRANCH" \
+              --head "${{ steps.branch.outputs.name }}" \
+              --title "$TITLE" \
+              --body "$PR_BODY"
+          fi
 
       # --- Conflict: don't commit broken state, flag it instead ---
       - name: Open issue on conflict
@@ -95,20 +101,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create \
-            --title "Upstream sync conflict ($(date +%Y-%m-%d))" \
-            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`) hit a merge conflict and could not be merged automatically.
+          TITLE="Upstream sync conflict ($(date +%Y-%m-%d))"
+          BODY=$(printf '%b' "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`) hit a merge conflict and could not be merged automatically.\n\nPlease merge manually:\n\`\`\`bash\ngit remote add upstream ${UPSTREAM_URL}\ngit fetch upstream ${UPSTREAM_BRANCH}\ngit checkout -b manual-upstream-sync\ngit merge upstream/${UPSTREAM_BRANCH}\n# resolve conflicts, then push and open a PR\n\`\`\`")
 
-Please merge manually:
-\`\`\`bash
-git remote add upstream ${UPSTREAM_URL}
-git fetch upstream ${UPSTREAM_BRANCH}
-git checkout -b manual-upstream-sync
-git merge upstream/${UPSTREAM_BRANCH}
-# resolve conflicts, then push and open a PR
-\`\`\`" \
+          if gh issue create \
+            --title "$TITLE" \
+            --body "$BODY" \
             --label "automated" \
-            --label "upstream-sync" \
-          || gh issue create \
-            --title "Upstream sync conflict ($(date +%Y-%m-%d))" \
-            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`) hit a merge conflict and could not be merged automatically. Please merge manually and resolve conflicts."
+            --label "upstream-sync"; then
+            echo "Issue created with labels"
+          else
+            echo "Issue creation with labels failed (labels may not exist yet) — retrying without labels"
+            gh issue create \
+              --title "$TITLE" \
+              --body "$BODY"
+          fi
