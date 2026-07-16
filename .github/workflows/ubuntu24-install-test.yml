@@ -1,0 +1,85 @@
+name: Ubuntu 24.04 install test
+
+# Runs on the 2nd and 16th of every month at 04:00 UTC — the day after
+# sync-upstream.yaml runs, so it tests whatever landed from that sync.
+# Cron has no native "every 2 weeks" field; this is the closest clean
+# equivalent. Also runnable manually from the Actions tab.
+on:
+  schedule:
+    - cron: '0 4 2,16 * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-test:
+    runs-on: ubuntu-24.04
+    # A bare ubuntu:24.04 image, not the GitHub-hosted runner's preinstalled
+    # toolchain, so this genuinely tests "does a fresh Ubuntu 24.04 machine
+    # work" the same way a new user's machine would.
+    container:
+      image: ubuntu:24.04
+    # Full source builds of mc_rtc + dependencies can take a while; adjust
+    # if you find it consistently needs more or less.
+    timeout-minutes: 240
+
+    steps:
+      # actions/checkout needs git already present, but a bare ubuntu:24.04
+      # image doesn't have it — install it before checkout can run.
+      - name: Install git (needed before actions/checkout can run)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure git identity
+        # bootstrap-linux.sh / the superbuild perform git operations that
+        # need an identity configured, even in CI.
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Bootstrap
+        run: ./utils/bootstrap-linux.sh
+
+      - name: Build superbuild with H1 enabled
+        # The README enables WITH_H1 interactively via ccmake after an
+        # initial build; non-interactively we can just pass it directly
+        # on the first configure instead of building twice.
+        run: |
+          cmake --preset relwithdebinfo -DWITH_H1=ON
+          cmake --build --preset relwithdebinfo
+
+      - name: Write mc_rtc controller config
+        run: |
+          mkdir -p ~/.config/mc_rtc
+          cat > ~/.config/mc_rtc/mc_rtc.yaml << 'EOF'
+          MainRobot: H1
+          Enabled: RLController
+          Timestep: 0.0025
+          LogPolicy: threaded
+          EOF
+
+      - name: Install a virtual display for Mujoco
+        run: apt-get install -y --no-install-recommends xvfb
+
+      - name: Run mc_mujoco for 5s and check it doesn't crash
+        run: |
+          source ../install/setup_mc_rtc.sh
+          set +e
+          xvfb-run -a timeout 5 mc_mujoco --sync
+          code=$?
+          set -e
+          # 124 = timeout killed it after 5s while still running (success case).
+          # 0   = it exited cleanly on its own (also fine).
+          # anything else = it crashed or errored out.
+          if [ "$code" -ne 0 ] && [ "$code" -ne 124 ]; then
+            echo "mc_mujoco exited with code $code — treating as failure"
+            exit 1
+          fi
+          echo "mc_mujoco ran for 5s without error (exit code: $code)"
