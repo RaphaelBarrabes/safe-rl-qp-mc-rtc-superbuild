@@ -31,7 +31,7 @@ AddProject(
 
 AddProject(
   state-observation
-  GITHUB jrl-umi3218/state-observation
+  GITHUB bastien-muraccioli/state-observation
   GIT_TAG origin/master
   CMAKE_ARGS -DBUILD_STATE_OBSERVATION_TOOLS:BOOL=OFF
   APT_PACKAGES libstate-observation-dev
@@ -146,7 +146,7 @@ if(PYTHON_BINDING)
 endif()
 AddProject(
   Tasks
-  GITHUB jrl-umi3218/Tasks
+  GITHUB bastien-muraccioli/Tasks
   GIT_TAG origin/master
   DEPENDS ${Tasks_DEPENDS}
   APT_PACKAGES libtasks-qld-dev python-tasks python3-tasks
@@ -166,9 +166,8 @@ else()
   set(tvm_EXTRA_DEPENDS)
 endif()
 
-AddProject(
-  tvm
-  GITHUB jrl-umi3218/tvm
+AddProject(tvm
+  GITHUB bastien-muraccioli/tvm
   GIT_TAG origin/master
   DEPENDS eigen-qld eigen-quadprog lexls ${tvm_EXTRA_DEPENDS}
   CMAKE_ARGS -DTVM_WITH_QLD:BOOL=ON
@@ -257,9 +256,8 @@ if(EMSCRIPTEN)
 else()
   set(MC_RTC_EXTRA_OPTIONS)
 endif()
-AddProject(
-  mc_rtc
-  GITHUB jrl-umi3218/mc_rtc
+AddProject(mc_rtc
+  GITHUB bastien-muraccioli/mc_rtc
   GIT_TAG origin/master
   CMAKE_ARGS -DMC_LOG_UI_PYTHON_EXECUTABLE=${MC_LOG_UI_PYTHON_EXECUTABLE}
              ${MC_RTC_ROS_OPTION} ${MC_RTC_EXTRA_OPTIONS}
@@ -295,7 +293,8 @@ endif()
 
 AddProject(
   mc_state_observation
-  GITHUB jrl-umi3218/mc_state_observation
+  GITHUB bastien-muraccioli/mc_state_observation
+  GIT_TAG origin/main
   CMAKE_ARGS ${MC_STATE_OBSERVATION_OPTIONS}
   DEPENDS ${MC_STATE_OBSERVATION_DEPENDS}
   APT_PACKAGES mc-state-observation ros-${ROS_DISTRO}-mc-state-observation

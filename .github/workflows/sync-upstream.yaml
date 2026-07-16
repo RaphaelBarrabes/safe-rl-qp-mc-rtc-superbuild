@@ -1,0 +1,114 @@
+name: Sync with upstream mc-rtc-superbuild
+
+# Cron has no native "every 2 weeks" field, so this runs on the 1st and 15th
+# of every month at 03:00 UTC (~every two weeks). Adjust as needed.
+on:
+  schedule:
+    - cron: '0 3 1,15 * *'
+  workflow_dispatch: {} # allows manual triggering from the Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  UPSTREAM_URL: https://github.com/mc-rtc/mc-rtc-superbuild.git
+  UPSTREAM_BRANCH: main
+  BASE_BRANCH: main
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.BASE_BRANCH }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream "$UPSTREAM_URL" 2>/dev/null || true
+          git fetch upstream "$UPSTREAM_BRANCH"
+
+      - name: Check if there is anything to sync
+        id: diff
+        run: |
+          if git diff --quiet HEAD "upstream/${UPSTREAM_BRANCH}"; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create sync branch
+        if: steps.diff.outputs.has_changes == 'true'
+        id: branch
+        run: |
+          BRANCH="sync-upstream-$(date +%Y%m%d)"
+          git checkout -b "$BRANCH"
+          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Attempt merge
+        if: steps.diff.outputs.has_changes == 'true'
+        id: merge
+        run: |
+          if git merge "upstream/${UPSTREAM_BRANCH}" --no-edit; then
+            echo "conflict=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "conflict=true" >> "$GITHUB_OUTPUT"
+            git merge --abort
+          fi
+
+      # --- Clean merge: push the branch and open a PR ---
+      - name: Push sync branch
+        if: steps.diff.outputs.has_changes == 'true' && steps.merge.outputs.conflict == 'false'
+        run: git push origin "${{ steps.branch.outputs.name }}"
+
+      - name: Open pull request
+        if: steps.diff.outputs.has_changes == 'true' && steps.merge.outputs.conflict == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "${{ steps.branch.outputs.name }}" \
+            --title "Sync with upstream mc-rtc-superbuild ($(date +%Y-%m-%d))" \
+            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`). Please review before merging, especially anything touching our extensions or presets." \
+            --label "automated" \
+            --label "upstream-sync" \
+          || echo "PR creation failed (label may not exist yet) — creating without labels" && \
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "${{ steps.branch.outputs.name }}" \
+            --title "Sync with upstream mc-rtc-superbuild ($(date +%Y-%m-%d))" \
+            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`). Please review before merging, especially anything touching our extensions or presets."
+
+      # --- Conflict: don't commit broken state, flag it instead ---
+      - name: Open issue on conflict
+        if: steps.diff.outputs.has_changes == 'true' && steps.merge.outputs.conflict == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Upstream sync conflict ($(date +%Y-%m-%d))" \
+            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`) hit a merge conflict and could not be merged automatically.
+
+Please merge manually:
+\`\`\`bash
+git remote add upstream ${UPSTREAM_URL}
+git fetch upstream ${UPSTREAM_BRANCH}
+git checkout -b manual-upstream-sync
+git merge upstream/${UPSTREAM_BRANCH}
+# resolve conflicts, then push and open a PR
+\`\`\`" \
+            --label "automated" \
+            --label "upstream-sync" \
+          || gh issue create \
+            --title "Upstream sync conflict ($(date +%Y-%m-%d))" \
+            --body "Automated sync from [mc-rtc/mc-rtc-superbuild](${UPSTREAM_URL}) (\`${UPSTREAM_BRANCH}\`) hit a merge conflict and could not be merged automatically. Please merge manually and resolve conflicts."
