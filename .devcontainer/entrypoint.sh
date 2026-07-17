@@ -3,12 +3,10 @@
 echo "-- Setting up the container --"
 echo "-- Checking devcontainer requirements --"
 if [ "$BUILD_VERSION" = "devcontainer" ]; then
-  # Check if /home/vscode/workspace exists
-  if [ ! -d /home/vscode/workspace ]; then
-    echo "⚠️ The /home/vscode/workspace directory is missing!"
-    echo "➡️ Please add the following to your devcontainer.json to mount it:"
-    echo '  "mounts": [ "type=bind,source=/path/to/local/workspace/mount/folder,target=/home/vscode/workspace" ]'
-  fi
+  # By default, WORKSPACE_SRC_DIR / WORKSPACE_BUILD_DIR / WORKSPACE_INSTALL_DIR
+  # (src/, build/, install/, siblings of superbuild/) live inside the
+  # container only and are lost on rebuild. If you added bind mounts for
+  # them in devcontainer.json for persistence, they'll show up here instead.
   if [ ! -d /home/vscode/superbuild ]; then
     echo "⚠️ The /home/vscode/superbuild directory is missing!"
     echo "➡️ Please add the following to your devcontainer.json to mount it:"
@@ -40,10 +38,10 @@ if [ "$BUILD_VERSION" = "devcontainer" ]; then
   echo "ccache is configured as follows:"
   # Copy cache from the image to the local repository
   # This ensures that cache is kept between successive container runs
-  echo "Synching local .ccache in your workspace with the pre-built cache in the docker image"
+  echo "Synching local .ccache with the pre-built cache in the docker image"
   echo "CCACHE_DIR=$CCACHE_DIR"
-  rsync -a ~/.cache/ccache/ ~/workspace/.ccache --exclude='**.tmp.*' --ignore-existing
-  export CCACHE_DIR=~/workspace/.ccache
+  rsync -a ~/.cache/ccache/ ~/.ccache-superbuild --exclude='**.tmp.*' --ignore-existing
+  export CCACHE_DIR=~/.ccache-superbuild
   ccache -sv
 fi
 
@@ -60,21 +58,21 @@ echo ""
 cd ~/superbuild
 cmake --list-presets
 echo ""
-echo '$ cmake --preset relwithdebinfo # configures cmake and install system dependencies'
+echo '$ cmake --preset relwithdebinfo-noble # configures cmake and install system dependencies'
 echo ""
-echo '$ cmake --build --preset relwithdebinfo'
-echo '- clones projects in ~/workspace/devel and builds all projects in the superbuild'
-echo '- generates a build folder for the superbuild in ~/workspace/build/superbuild'
-echo '- generates a build folder for all projects in ~/workspace/build/projects/<project_name>'
+echo '$ cmake --build --preset relwithdebinfo-noble'
+echo '- clones projects in ~/src and builds all projects in the superbuild'
+echo '- generates a build folder for the superbuild in ~/build/superbuild'
+echo '- generates a build folder for all projects in ~/build/<project_name>'
 echo
 echo 'To update all projects in the superbuild, run:'
-echo '$ cmake --build --preset relwithdebinfo --target update'
-echo '$ cmake --build --preset relwithdebinfo'
+echo '$ cmake --build --preset relwithdebinfo-noble --target update'
+echo '$ cmake --build --preset relwithdebinfo-noble'
 echo
-echo 'Projects are installed in ~/workspace/install'
+echo 'Projects are installed in ~/install'
 echo
 echo "Please refer to README.md for more information about the superbuild."
 echo ""
 echo ""
-echo 'After building, please run source ~/workspace/install/setup_mc_rtc.sh'
+echo 'After building, please run source ~/install/setup_mc_rtc.sh'
 echo ""

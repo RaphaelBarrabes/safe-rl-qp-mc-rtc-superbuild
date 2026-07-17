@@ -9,9 +9,9 @@ updates:
       - "dependencies"
       - "github-actions"
 
-  # Keep the devcontainer's base image up to date
+  # Keep the devcontainer's base image up to date.
   - package-ecosystem: "docker"
-    directory: "/.devcontainer"
+    directory: "/.github/devcontainer"
     schedule:
       interval: "monthly"
     labels:

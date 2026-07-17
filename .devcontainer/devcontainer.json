@@ -1,0 +1,76 @@
+{
+  "name": "safe-rl-qp-mc-rtc-superbuild",
+
+  // Built locally from .github/devcontainer/Dockerfile rather than pulled
+  // from ghcr.io/mc-rtc/mc-rtc-superbuild — the upstream prebuilt image was
+  // built with upstream's install paths (workspace/devel, workspace/build,
+  // workspace/install), which don't match our CMakePresets.json layout
+  // (sourceDir-sibling src/, build/, install/). Building locally means the
+  // image is always consistent with this repo's presets.
+  "build": {
+    "dockerfile": "../.github/devcontainer/Dockerfile",
+    "context": "..",
+    "args": {
+      "CMAKE_PRESET": "${localEnv:CMAKE_PRESET:relwithdebinfo-noble}",
+      "BUILD_VERSION": "${localEnv:BUILD_VERSION:devcontainer}",
+      "IMAGE_SOURCE_REPO": "",
+      "UBUNTU_VERSION": "noble"
+    },
+    "options": [
+      "${localEnv:SSH_OPT:''}"
+    ]
+  },
+
+  "mounts": [
+    "type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,consistency=cached"
+    // By default, src/build/install live inside the container only and are
+    // lost on rebuild (matches upstream's original default). Uncomment and
+    // point at host folders if you want build output to persist across
+    // container rebuilds:
+    // "source=${localEnv:HOME}${localEnv:USERPROFILE}/mc-rtc-superbuild-src,target=/home/vscode/src,type=bind,consistency=cached",
+    // "source=${localEnv:HOME}${localEnv:USERPROFILE}/mc-rtc-superbuild-build,target=/home/vscode/build,type=bind,consistency=cached",
+    // "source=${localEnv:HOME}${localEnv:USERPROFILE}/mc-rtc-superbuild-install,target=/home/vscode/install,type=bind,consistency=cached"
+  ],
+
+  "runArgs": [
+    "--network=host",
+    "--cap-add=sys_nice", // Grants the container the CAP_SYS_NICE capability, which allows the container to raise process nice values, set real-time scheduling policies, set CPU affinity, and other operations.
+    "--security-opt", // allow core dumps
+    "seccomp=unconfined" // allow core dumps
+    // Uncomment for containers requiring use of nvidia GPUs
+    // You will need to install NVIDIA Container Toolkit first
+    // "--runtime=nvidia",
+    // "--gpus=all",
+  ],
+
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
+
+  "remoteUser": "vscode",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/superbuild,type=bind",
+  "workspaceFolder": "/home/vscode/superbuild",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/arntanguy/nvim-devcontainer-feature/nvim:latest": {},
+    "ghcr.io/devcontainers/features/github-cli": { "version": "latest" },
+    "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": { "version": "latest" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "josetr.cmake-language-support-vscode",
+        "ms-vscode.cpptools",
+        "ms-vscode.docker",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode-remote.remote-containers",
+        "ms-python.python",
+        "GitHub.vscode-github-actions"
+      ]
+    }
+  }
+}
