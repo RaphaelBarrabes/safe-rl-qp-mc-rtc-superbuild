@@ -58,21 +58,27 @@ echo ""
 cd ~/superbuild
 cmake --list-presets
 echo ""
-echo '$ cmake --preset relwithdebinfo-noble # configures cmake and install system dependencies'
+echo '$ cmake --preset relwithdebinfo # configures cmake and install system dependencies'
 echo ""
-echo '$ cmake --build --preset relwithdebinfo-noble'
+echo '$ cmake --build --preset relwithdebinfo'
 echo '- clones projects in ~/src and builds all projects in the superbuild'
 echo '- generates a build folder for the superbuild in ~/build/superbuild'
 echo '- generates a build folder for all projects in ~/build/<project_name>'
 echo
 echo 'To update all projects in the superbuild, run:'
-echo '$ cmake --build --preset relwithdebinfo-noble --target update'
-echo '$ cmake --build --preset relwithdebinfo-noble'
+echo '$ cmake --build --preset relwithdebinfo --target update'
+echo '$ cmake --build --preset relwithdebinfo'
 echo
 echo 'Projects are installed in ~/install'
 echo
 echo "Please refer to README.md for more information about the superbuild."
 echo ""
+echo "Handy aliases are already set up in this container:"
+echo '  mc_build              - rebuild the superbuild'
+echo '  mc_superbuild_config  - open ccmake to change build options (e.g. add a new robot)'
+echo '  mc_update             - git pull + rebuild all projects'
+echo '  mc_config             - open mc_rtc.yaml (robot/controller selection) in VS Code'
+echo '  mc_rviz               - open the RViz interface'
 echo ""
-echo 'After building, please run source ~/install/setup_mc_rtc.sh'
+echo 'H1 is already built and ready to run — set it up with mc_config, then run: mc_mujoco --sync'
 echo ""

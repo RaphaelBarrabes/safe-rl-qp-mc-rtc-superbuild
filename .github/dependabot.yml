@@ -17,3 +17,11 @@ updates:
     labels:
       - "dependencies"
       - "devcontainer"
+
+  - package-ecosystem: "devcontainers"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "devcontainer"

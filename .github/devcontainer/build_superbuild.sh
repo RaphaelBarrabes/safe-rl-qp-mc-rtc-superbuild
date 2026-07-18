@@ -18,11 +18,20 @@ else
   du -hs $CCACHE_DIR
 
   # Configure the chosen superbuild preset
+  # -DWITH_H1=ON matches the README's end state (H1 walking example ready
+  # to run), instead of requiring a manual ccmake + rebuild step inside
+  # the container afterward. Drop it if you want a lighter/faster image.
   echo "SUPERBUILD: Configuring superbuild with preset $CMAKE_PRESET"
-  cmake --preset $CMAKE_PRESET -DSUPERBUILD_OVERRIDE_SHELL="zsh"
+  cmake --preset $CMAKE_PRESET -DSUPERBUILD_OVERRIDE_SHELL="zsh" -DWITH_H1=ON
   # Build the whole superbuild
+  # --parallel caps concurrent compile/link jobs. Building unlimited-parallel
+  # (the default) can spike memory usage past the container's/Docker
+  # Desktop's limit and get silently OOM-killed with no CMake-level error —
+  # which looks exactly like a build that just stops mid-way with exit
+  # code 1 and nothing useful logged. Lower this further (e.g. 2) if it
+  # still happens.
   echo "SUPERBUILD: Building the superbuild"
-  cmake --build --preset $CMAKE_PRESET
+  cmake --build --preset $CMAKE_PRESET --parallel 2
 
   echo "CCACHE: Checking ccache contents after build:"
   ccache -sv
