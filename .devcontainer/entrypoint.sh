@@ -80,5 +80,5 @@ echo '  mc_update             - git pull + rebuild all projects'
 echo '  mc_config             - open mc_rtc.yaml (robot/controller selection) in VS Code'
 echo '  mc_rviz               - open the RViz interface'
 echo ""
-echo 'H1 is already built and ready to run — set it up with mc_config, then run: mc_mujoco --sync'
+echo 'H1 is already built and ready to run — set it up with mc_config, then cd into ~/src/rl_controller/policy/ and run: mc_mujoco --sync'
 echo ""

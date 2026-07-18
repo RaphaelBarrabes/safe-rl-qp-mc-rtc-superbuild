@@ -152,9 +152,10 @@ Timestep: 0.0025             # Controller timestep
 LogPolicy: threaded
 ```
 
-Save the file, then run the controller in Mujoco with:
+Save the file, then `cd` into the folder containing the policy to run — `mc_mujoco` needs to be run from there, not from an arbitrary directory — and start the controller in Mujoco:
 
 ```bash
+cd ~/workspace/src/rl_controller/policy/
 mc_mujoco --sync
 ```
 

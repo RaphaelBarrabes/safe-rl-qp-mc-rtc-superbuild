@@ -71,6 +71,10 @@ jobs:
       - name: Run mc_mujoco for 5s and check it doesn't crash
         run: |
           source ../install/setup_mc_rtc.sh
+          # mc_mujoco must be run from the folder containing the policy to
+          # run, not from an arbitrary directory (same requirement as the
+          # README's "Running a controller" section).
+          cd ../src/rl_controller/policy/
           set +e
           xvfb-run -a timeout 5 mc_mujoco --sync
           code=$?
