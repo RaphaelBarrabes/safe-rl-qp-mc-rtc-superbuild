@@ -31,9 +31,7 @@ jobs:
       - name: Install git (needed before actions/checkout can run)
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates locales 
-          locale-gen en_US.UTF-8
-          export LANG=en_US.UTF-8
+          apt-get install -y --no-install-recommends git ca-certificates
 
       - name: Checkout
         uses: actions/checkout@v7
@@ -50,9 +48,6 @@ jobs:
         run: ./utils/bootstrap-linux.sh
 
       - name: Build superbuild with H1 enabled
-        # The README enables WITH_H1 interactively via ccmake after an
-        # initial build; non-interactively we can just pass it directly
-        # on the first configure instead of building twice.
         run: |
           cmake --preset relwithdebinfo -DWITH_H1=ON
           cmake --build --preset relwithdebinfo

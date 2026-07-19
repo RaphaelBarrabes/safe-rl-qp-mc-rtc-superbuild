@@ -4,6 +4,8 @@ if(NOT WITH_H1)
   return()
 endif()
 
+AptInstall(cmake g++ build-essential libyaml-cpp-dev libeigen3-dev libboost-all-dev libspdlog-dev libfmt-dev)
+
 AddCatkinProject(
   h1_description
   GITHUB bastien-muraccioli/h1_description
