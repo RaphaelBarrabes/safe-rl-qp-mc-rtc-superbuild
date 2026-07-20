@@ -1,9 +1,5 @@
 name: Ubuntu 24.04 install test
 
-# Runs on the 2nd and 16th of every month at 04:00 UTC — the day after
-# sync-upstream.yaml runs, so it tests whatever landed from that sync.
-# Cron has no native "every 2 weeks" field; this is the closest clean
-# equivalent. Also runnable manually from the Actions tab.
 on:
   schedule:
     - cron: '0 4 2,16 * *'
@@ -16,18 +12,10 @@ concurrency:
 jobs:
   install-test:
     runs-on: ubuntu-24.04
-    # A bare ubuntu:24.04 image, not the GitHub-hosted runner's preinstalled
-    # toolchain, so this genuinely tests "does a fresh Ubuntu 24.04 machine
-    # work" the same way a new user's machine would.
     container:
       image: ubuntu:24.04
-    # Full source builds of mc_rtc + dependencies can take a while; adjust
-    # if you find it consistently needs more or less.
-    timeout-minutes: 240
 
     steps:
-      # actions/checkout needs git already present, but a bare ubuntu:24.04
-      # image doesn't have it — install it before checkout can run.
       - name: Install git (needed before actions/checkout can run)
         env:
           DEBIAN_FRONTEND: noninteractive  # Prevents tzdata from prompting for input
@@ -35,13 +23,13 @@ jobs:
           apt-get update
           apt-get install -y tzdata
           apt-get install -y --no-install-recommends git ca-certificates
+          apt-get install locales && locale-gen en_US.UTF-8
+          export LANG=en_US.UTF-8
 
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Configure git identity
-        # bootstrap-linux.sh / the superbuild perform git operations that
-        # need an identity configured, even in CI.
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"

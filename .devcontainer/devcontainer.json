@@ -53,6 +53,14 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/workspace/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/home/vscode/workspace/${localWorkspaceFolderBasename}",
 
+  // Populates the mounted src/build/install dirs on first container
+  // creation, matching the CI (ubuntu24-install-test.yml) exactly:
+  // configure+build WITHOUT WITH_H1 first, then reconfigure+build again
+  // WITH WITH_H1=ON. Don't collapse this into a single pass — dependency
+  // installation order depends on it. Uses the pre-baked ccache, so this
+  // should be quick even though it repeats build_superbuild.sh's steps.
+  "postCreateCommand": "cd ${containerWorkspaceFolder} && cmake --preset relwithdebinfo && cmake --build --preset relwithdebinfo && cmake --preset relwithdebinfo -DWITH_H1=ON && cmake --build --preset relwithdebinfo",
+
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/arntanguy/nvim-devcontainer-feature/nvim:latest": {},

@@ -119,12 +119,13 @@ DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true
 
 # Same helper aliases the README has users add to their own .bashrc,
-# adapted to this container's paths (~/superbuild, ~/build/superbuild)
-# and using `code` instead of gnome-text-editor since VS Code is already
-# the editor in use here.
-alias mc_build='cd ~/superbuild; cmake --build --preset relwithdebinfo'
-alias mc_superbuild_config="cd ~/build/superbuild; ccmake ."
-alias mc_update='cd ~/build/superbuild; cmake --build . --config RelWithDebInfo --target update'
+# adapted to this container's paths ($SUPERBUILD_DIR, $WORKSPACE_BUILD_DIR/superbuild,
+# both set as env vars by the Dockerfile/devcontainer.json) and using
+# `code` instead of gnome-text-editor since VS Code is already the editor
+# in use here.
+alias mc_build='cd "$SUPERBUILD_DIR"; cmake --build --preset relwithdebinfo'
+alias mc_superbuild_config='cd "$WORKSPACE_BUILD_DIR/superbuild"; ccmake .'
+alias mc_update='cd "$WORKSPACE_BUILD_DIR/superbuild"; cmake --build . --config RelWithDebInfo --target update'
 alias mc_rviz="ros2 launch mc_rtc_ticker display.launch"
 alias mc_config="mkdir -p ~/.config/mc_rtc && code ~/.config/mc_rtc/mc_rtc.yaml"
 

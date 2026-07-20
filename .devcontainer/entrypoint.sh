@@ -7,11 +7,9 @@ if [ "$BUILD_VERSION" = "devcontainer" ]; then
   # (src/, build/, install/, siblings of superbuild/) live inside the
   # container only and are lost on rebuild. If you added bind mounts for
   # them in devcontainer.json for persistence, they'll show up here instead.
-  if [ ! -d /home/vscode/superbuild ]; then
-    echo "⚠️ The /home/vscode/superbuild directory is missing!"
-    echo "➡️ Please add the following to your devcontainer.json to mount it:"
-    echo '"workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/superbuild,type=bind",'
-    echo '"workspaceFolder": "/home/vscode/superbuild"'
+  if [ ! -d "$SUPERBUILD_DIR" ]; then
+    echo "⚠️ The $SUPERBUILD_DIR directory is missing!"
+    echo "➡️ Please check the workspaceMount/workspaceFolder settings in your devcontainer.json"
   fi
 fi
 
@@ -55,7 +53,7 @@ echo ""
 echo "All the tools needed to work with mc_rtc are pre-installed in this image."
 echo "To build, use one of the proposed cmake presets:"
 echo ""
-cd ~/superbuild
+cd "$SUPERBUILD_DIR"
 cmake --list-presets
 echo ""
 echo '$ cmake --preset relwithdebinfo # configures cmake and install system dependencies'
@@ -80,5 +78,5 @@ echo '  mc_update             - git pull + rebuild all projects'
 echo '  mc_config             - open mc_rtc.yaml (robot/controller selection) in VS Code'
 echo '  mc_rviz               - open the RViz interface'
 echo ""
-echo 'H1 is already built and ready to run — set it up with mc_config, then cd into ~/src/rl_controller/policy/ and run: mc_mujoco --sync'
+echo "H1 is already built and ready to run — set it up with mc_config, then cd into $WORKSPACE_SRC_DIR/rl_controller/policy/ and run: mc_mujoco --sync"
 echo ""

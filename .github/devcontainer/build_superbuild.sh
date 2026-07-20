@@ -17,14 +17,19 @@ else
   echo "CCACHE: Checking ccache size:"
   du -hs $CCACHE_DIR
 
-  # Configure the chosen superbuild preset
-  # -DWITH_H1=ON matches the README's end state (H1 walking example ready
-  # to run), instead of requiring a manual ccmake + rebuild step inside
-  # the container afterward. Drop it if you want a lighter/faster image.
+  # Two-phase build, matching the CI (ubuntu24-install-test.yml) exactly:
+  # 1. Configure and build WITHOUT WITH_H1 first.
+  # 2. Reconfigure with -DWITH_H1=ON and build again.
+  # This order matters for dependency installation, so don't collapse it
+  # into a single configure+build pass.
   echo "SUPERBUILD: Configuring superbuild with preset $CMAKE_PRESET"
   cmake --preset $CMAKE_PRESET -DSUPERBUILD_OVERRIDE_SHELL="zsh"
-  # Build the whole superbuild
-  echo "SUPERBUILD: Building the superbuild"
+  echo "SUPERBUILD: Building the superbuild (without H1)"
+  cmake --build --preset $CMAKE_PRESET
+
+  echo "SUPERBUILD: Reconfiguring superbuild with WITH_H1=ON"
+  cmake --preset $CMAKE_PRESET -DSUPERBUILD_OVERRIDE_SHELL="zsh" -DWITH_H1=ON
+  echo "SUPERBUILD: Building the superbuild (with H1)"
   cmake --build --preset $CMAKE_PRESET
 
   echo "CCACHE: Checking ccache contents after build:"
