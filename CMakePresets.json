@@ -25,19 +25,21 @@
             }
         },
         {
-            "name": "relwithdebinfo-noble",
-            "displayName": "RelWithDebInfo (noble, ROS, no Python)",
+            "name": "release",
             "inherits": [
                 "relwithdebinfo"
             ],
             "cacheVariables": {
-                "PYTHON_BINDING": "OFF",
-                "WITH_ROS_SUPPORT": "ON"
-            },
-            "condition": {
-                "type": "equals",
-                "lhs": "$env{UBUNTU_VERSION}",
-                "rhs": "noble"
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "release-notests",
+            "inherits": [
+                "relwithdebinfo-notests"
+            ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
             }
         }
     ],
@@ -61,10 +63,19 @@
             ]
         },
         {
-            "name": "relwithdebinfo-noble",
-            "displayName": "RelWithDebInfo (ubuntu noble)",
-            "configurePreset": "relwithdebinfo-noble",
-            "configuration": "RelWithDebInfo",
+            "name": "release",
+            "displayName": "Release",
+            "configurePreset": "release",
+            "configuration": "Release",
+            "targets": [
+                "install"
+            ]
+        },
+        {
+            "name": "release-notests",
+            "displayName": "Release (no tests)",
+            "configurePreset": "release-notests",
+            "configuration": "Release",
             "targets": [
                 "install"
             ]

@@ -40,10 +40,10 @@ jobs:
 
       - name: Build superbuild with H1 enabled
         run: |
-          cmake --preset relwithdebinfo
-          cmake --build --preset relwithdebinfo
-          cmake --preset relwithdebinfo -DWITH_H1=ON
-          cmake --build --preset relwithdebinfo
+          cmake --preset release-notests
+          cmake --build --preset release-notests
+          cmake --preset release-notests -DWITH_H1=ON
+          cmake --build --preset release-notests -DCMAKE_BUILD_TYPE=Release
 
       - name: Write mc_rtc controller config
         run: |
